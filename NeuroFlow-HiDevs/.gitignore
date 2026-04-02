@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Database / vector stores
+*.db
+*.sqlite
+chroma/
+pgdata/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Node
+node_modules/
+.next/
+.turbo/
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Secrets baseline
+# (keep .secrets.baseline committed)
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Training data (large)
+training_data/*.jsonl

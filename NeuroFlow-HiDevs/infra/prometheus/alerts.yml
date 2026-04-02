@@ -1,0 +1,46 @@
+groups:
+  - name: neuroflow
+    rules:
+      - alert: HighQueryErrorRate
+        expr: rate(neuroflow_queries_total{status="error"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 10% of queries are failing"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: CircuitBreakerOpen
+        expr: neuroflow_circuit_breakers_open > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "One or more LLM provider circuit breakers are open"
+          description: "{{ $value }} circuit breaker(s) currently open."
+
+      - alert: EvaluationScoreDegraded
+        expr: neuroflow_eval_overall < 0.65
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pipeline quality score below 0.65 for 15 minutes"
+          description: "Pipeline {{ $labels.pipeline_id }} overall score is {{ $value }}."
+
+      - alert: QueueDepthHigh
+        expr: neuroflow_queue_depth > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ingestion queue depth above 50 for 5 minutes"
+          description: "Current queue depth: {{ $value }}"
+
+      - alert: HighRetrievalLatency
+        expr: histogram_quantile(0.95, rate(neuroflow_retrieval_latency_seconds_bucket[5m])) > 2.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 retrieval latency above 2 seconds"

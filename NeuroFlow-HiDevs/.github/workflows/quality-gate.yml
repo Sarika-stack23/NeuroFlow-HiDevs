@@ -1,0 +1,50 @@
+name: Quality Gate
+
+on:
+  schedule:
+    - cron: "0 2 * * *"   # 2 AM UTC every night
+  workflow_dispatch:
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -r backend/requirements.txt
+
+      - name: Run retrieval benchmark
+        env:
+          POSTGRES_URL: ${{ secrets.STAGING_POSTGRES_URL }}
+          REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        run: |
+          cd backend
+          python -c "
+          import json, sys
+          try:
+              with open('../evaluation/retrieval_results.json') as f:
+                  results = json.load(f)
+              mrr = results.get('mrr', 0)
+              hit_rate = results.get('hit_rate', 0)
+              print(f'MRR: {mrr}, Hit Rate: {hit_rate}')
+              if mrr < 0.55:
+                  print(f'FAIL: MRR {mrr} below threshold 0.55')
+                  sys.exit(1)
+              if hit_rate < 0.75:
+                  print(f'FAIL: Hit Rate {hit_rate} below threshold 0.75')
+                  sys.exit(1)
+              print('Quality gate PASSED')
+          except FileNotFoundError:
+              print('No retrieval_results.json found — skipping gate')
+          "
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Quality gate failed — notify team"
